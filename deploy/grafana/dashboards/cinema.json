@@ -1,0 +1,205 @@
+{
+  "id": null,
+  "uid": "cinema-analytics",
+  "title": "Online Cinema Analytics",
+  "tags": [
+    "cinema"
+  ],
+  "timezone": "utc",
+  "schemaVersion": 40,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-14d",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "table",
+      "title": "Retention Cohort Heatmap",
+      "description": "Cohort: first activity date. Return: any event on Day N. Empty cells mean the day has not occurred or the cohort is empty.",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 10
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 1,
+          "rawSql": "SELECT toString(date) AS Cohort,\nmaxIf(value, dimension = '0') AS `Day 0`,\nmaxIf(value, dimension = '1') AS `Day 1`,\nmaxIf(value, dimension = '2') AS `Day 2`,\nmaxIf(value, dimension = '3') AS `Day 3`,\nmaxIf(value, dimension = '4') AS `Day 4`,\nmaxIf(value, dimension = '5') AS `Day 5`,\nmaxIf(value, dimension = '6') AS `Day 6`,\nmaxIf(value, dimension = '7') AS `Day 7`\nFROM cinema.daily_metrics WHERE metric = 'cohort_retention' AND $__dateFilter(date)\nAND date IN (SELECT date FROM cinema.daily_metrics WHERE metric = 'cohort_size' AND dimension = 'first_activity' AND value > 0)\nGROUP BY date ORDER BY date"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          },
+          "noValue": "—"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^Day [0-7]$"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 1
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "continuous-BlYlRd"
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "md",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "DAU",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 10,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "timeSeries",
+          "format": 0,
+          "rawSql": "SELECT toDateTime(date, 'UTC') AS time, value AS \"DAU\" FROM cinema.daily_metrics WHERE metric = 'dau' AND $__dateFilter(date) ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 15,
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "View conversion",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 10,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "timeSeries",
+          "format": 0,
+          "rawSql": "SELECT toDateTime(date, 'UTC') AS time, value AS \"View conversion\" FROM cinema.daily_metrics WHERE metric = 'view_conversion' AND $__dateFilter(date) ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 15,
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      }
+    }
+  ]
+}
